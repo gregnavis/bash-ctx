@@ -1,0 +1,175 @@
+#!/usr/bin/env bash
+
+# PUBLIC VARIABLES AND FUNCTIONS
+# ==============================
+
+# The root directory where all contexts (represent by subdirectories) are kept.
+CTX_ROOT="${HOME}/.bash-ctx"
+
+# Context management. Call `ctx help` for details.
+ctx() {
+    local command="$1"
+
+    shift
+
+    case "${command}" in
+        "new") _ctx_new $@ ;;
+        "switch") _ctx_switch $@ ;;
+        "leave") _ctx_leave $@ ;;
+        "list") _ctx_list $@ ;;
+        "help") _ctx_help ;;
+        "") _ctx_help ;;
+        *) _ctx_unknown "${command}" ;;
+    esac
+}
+
+# SUBCOMMANDS
+# ===========
+
+# Usage: _ctx_new <context name>
+# Create a new context or report an _error if it does not exist.
+_ctx_new() {
+    local ctx_dir="${CTX_ROOT}/$1"
+
+    if [ -e "${ctx_dir}" ]; then
+        _error "the context $1 already exist"
+        return
+    fi
+
+    mkdir -p "${ctx_dir}"
+    touch "${ctx_dir}/enter"
+    touch "${ctx_dir}/leave"
+    _success "created context $1"
+}
+
+# Usage: _ctx_switch <context name>
+# Switch to another context. Leave the current context if present.
+_ctx_switch() {
+    _ctx_leave
+    _ctx_enter "$1"
+}
+
+# Usage: _ctx_leave
+# Leave the current context: save the context-specifc command history and call
+# the leave script (if it exist). Does nothing if callout outside of a context.
+_ctx_leave() {
+    if [ -z "${CTX_NAME}" ]; then
+        return
+    fi
+
+    history -a
+
+    local ctx_dir="${CTX_ROOT}/${CTX_NAME}"
+    _try_source "${ctx_dir}/leave"
+    unset CTX_NAME
+}
+
+# Usage: _ctx_list
+# List existing contexts.
+_ctx_list() {
+    command ls "${CTX_ROOT}"
+}
+
+# Usage: _ctx_help
+# Display a help for the commend.
+_ctx_help() {
+    echo "Usage:"
+    echo "  ctx <coommand> <command arguments>"
+    echo
+    echo "Commands:"
+    echo "  new <context name>      create a new context"
+    echo "  switch <context name>   switch to another context"
+    echo "  leave                   leave the current context"
+    echo "  list                    list all existing contexts"
+    echo "  help                    display this message"
+}
+
+# Usage: _ctx_unknown <command name>
+# Report an _error about an unknown command.
+_ctx_unknown() {
+    _error "unknown command $1"
+    _ctx_help
+    return 1
+}
+
+# INTERNALS
+# =========
+
+# Color sequences.
+_CTX_RED="$(tput setaf 1)"
+_CTX_GREEN="$(tput setaf 2)"
+_CTX_RESET="$(tput sgr0)"
+
+# Usage: _ctx_enter <context name>
+# Enter the specified context: call its enter script (if it exists) and restore
+# history. Reports an _error if the context does not exist.
+_ctx_enter() {
+    local ctx_dir="${CTX_ROOT}/$1"
+    local histfile=""
+
+    if [ ! -e "${ctx_dir}" ]; then
+        _error "the context $1 does not exist"
+        return 1
+    fi
+
+    _try_source "${ctx_dir}/enter"
+
+    export HISTFILE="${ctx_dir}/history"
+    history -r
+
+    export CTX_NAME="$1"
+}
+
+# Usage: _try_source <path to a bash script>
+# Load the specified bash script if it exists; do nothing otherwise.
+_try_source() {
+    if [ -r "$1" ]; then
+        source "$1"
+    fi
+}
+
+# Usage: _error <message>
+# Dispaly an error message.
+_error() {
+    echo "${_CTX_RED}Error: $1${_CTX_RESET}"
+}
+
+# Usage: _success <message>
+# Display a success message.
+_success() {
+    echo "${_CTX_GREEN}Success: $1${_CTX_RESET}"
+}
+
+# COMMAND COMPLETION
+# ==================
+
+# Command line completion function.
+_ctx_complete() {
+    case "${COMP_WORDS[COMP_CWORD - 1]}" in
+        ctx) options='new switch leave list help' ;;
+        switch) options=$(ls -1 ${CTX_ROOT}) ;;
+        leave) options='' ;;
+        new) options='' ;;
+    esac
+
+    COMPREPLY=($(compgen -W "${options}" ${COMP_WORDS[COMP_CWORD]}))
+}
+
+# Complete ctx.
+complete -F _ctx_complete ctx
+
+# Call `ctx leave` when quitting the shell.
+trap _ctx_leave EXIT
+
+# SUPPORTING FILES AND DIRECTORIES
+# ================================
+
+# Usage: _setup
+# Setup supporting files and directories if they don't exist.
+_setup() {
+    if [[ ! -d "${CTX_ROOT}" ]]; then
+        mkdir -p "${CTX_ROOT}"
+    fi
+}
+
+_setup
