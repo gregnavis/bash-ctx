@@ -74,7 +74,7 @@ _ctx_list() {
 # Display a help for the commend.
 _ctx_help() {
     echo "Usage:"
-    echo "  ctx <coommand> <command arguments>"
+    echo "  ctx <command> <command arguments>"
     echo
     echo "Commands:"
     echo "  new <context name>      create a new context"
