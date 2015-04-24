@@ -14,7 +14,7 @@ ctx() {
 
     case "${command}" in
         "new") _ctx_new $@ ;;
-        "switch") _ctx_switch $@ ;;
+        "enter") _ctx_enter $@ ;;
         "leave") _ctx_leave $@ ;;
         "list") _ctx_list $@ ;;
         "help") _ctx_help ;;
@@ -42,11 +42,34 @@ _ctx_new() {
     _success "created context $1"
 }
 
-# Usage: _ctx_switch <context name>
-# Switch to another context. Leave the current context if present.
-_ctx_switch() {
-    _ctx_leave
-    _ctx_enter "$1"
+# Usage: _ctx_enter <context name>
+# Enter the specified context: call its enter script (if it exists) and restore
+# history. Reports an _error if the context does not exist or if already in
+# another context. Does nothing when called with the current context.
+_ctx_enter() {
+    if [ "${CTX_NAME}" == "$1" ]; then
+        return
+    fi
+
+    if [ -n "${CTX_NAME}" ]; then
+        _error "leave the current context ${CTX_NAME} first"
+        return 1
+    fi
+
+    local ctx_dir="${CTX_ROOT}/$1"
+    local histfile=""
+
+    if [ ! -e "${ctx_dir}" ]; then
+        _error "the context $1 does not exist"
+        return 1
+    fi
+
+    _try_source "${ctx_dir}/enter"
+
+    export HISTFILE="${ctx_dir}/history"
+    history -r
+
+    export CTX_NAME="$1"
 }
 
 # Usage: _ctx_leave
@@ -78,7 +101,7 @@ _ctx_help() {
     echo
     echo "Commands:"
     echo "  new <context name>      create a new context"
-    echo "  switch <context name>   switch to another context"
+    echo "  enter <context name>    enter a context"
     echo "  leave                   leave the current context"
     echo "  list                    list all existing contexts"
     echo "  help                    display this message"
@@ -99,26 +122,6 @@ _ctx_unknown() {
 _CTX_RED="$(tput setaf 1)"
 _CTX_GREEN="$(tput setaf 2)"
 _CTX_RESET="$(tput sgr0)"
-
-# Usage: _ctx_enter <context name>
-# Enter the specified context: call its enter script (if it exists) and restore
-# history. Reports an _error if the context does not exist.
-_ctx_enter() {
-    local ctx_dir="${CTX_ROOT}/$1"
-    local histfile=""
-
-    if [ ! -e "${ctx_dir}" ]; then
-        _error "the context $1 does not exist"
-        return 1
-    fi
-
-    _try_source "${ctx_dir}/enter"
-
-    export HISTFILE="${ctx_dir}/history"
-    history -r
-
-    export CTX_NAME="$1"
-}
 
 # Usage: _try_source <path to a bash script>
 # Load the specified bash script if it exists; do nothing otherwise.
@@ -146,8 +149,8 @@ _success() {
 # Command line completion function.
 _ctx_complete() {
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
-        ctx) options='new switch leave list help' ;;
-        switch) options=$(ls -1 ${CTX_ROOT}) ;;
+        ctx) options='new enter leave list help' ;;
+        enter) options=$(ls -1 ${CTX_ROOT}) ;;
         leave) options='' ;;
         new) options='' ;;
     esac
