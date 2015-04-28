@@ -1,3 +1,13 @@
 #!/usr/bin/env bash
-sudo bash -c "curl -fsSL https://raw.githubusercontent.com/grn/bash-ctx/master/bash-ctx > /usr/libexec/bash-ctx"
-echo "[ -r /usr/libexec/bash-ctx ] && source /usr/libexec/bash-ctx" >> "${HOME}/.bashrc"
+
+set -e
+
+mkdir -p "${HOME}/.bash-ctx"
+cp bash-ctx "${HOME}/.bash-ctx.source"
+
+echo
+echo 'Please remember to add the following to your .bashrc:'
+echo
+echo 'if [ -r "${HOME}/.bash-ctx.source" ]; then'
+echo '    source "${HOME}/.bash-ctx.source"'
+echo 'fi'

@@ -6,29 +6,38 @@ here.
 
 ## Installation
 
-Just run
+Download and extract https://github.com/grn/bash-ctx/archive/master.zip and run
+`install`:
 
-	curl -fsSL https://raw.githubusercontent.com/grn/bash-ctx/master/install | bash
+```
+$ wget https://github.com/grn/bash-ctx/archive/master.zip
+$ unzip master.zip
+$ cd bash-ctx-master
+$ ./install
+```
 
-Restart bash after the installation is complete.
+Remember to load `bash-ctx` from `.bashrc` by adding:
 
-Alternatively, copy `bash-ctx` to a directory of your choice (for instance
-`/usr/libexec`) and add the following line at the end of your `.bashrc`:
-
-	[ -r /usr/libexec/bash-ctx ] && source /usr/libexec/bash-ctx
-
-Remember to restart your bash so it loads the script.
+```bash
+if [ -r "${HOME}/.bash-ctx.source" ]; then
+  source "${HOME}/.bash-ctx.source"
+fi
+```
 
 ## Usage
 
 Create a new context for your project:
 
-	ctx new my-project
+```
+ctx new my-project
+```
 
 Add project-specific aliases by editing `~/.bash-ctx/my-project/enter`:
 
-	alias _deploy='git push heroku master'
-	alias _seed='rake db:seed'
+```
+alias _deploy='git push heroku master'
+alias _seed='rake db:seed'
+```
 
 In order to enter the newly created context run `ctx switch my-project`.
 
@@ -38,8 +47,10 @@ current context if any).
 
 You can also list all contexts with `ctx list`:
 
-	ctx list
-	my-context
+```
+ctx list
+my-context
+```
 
 Additionally `bash-ctx` keeps a separate command history for each context.
 
