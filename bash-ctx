@@ -148,6 +148,8 @@ _success() {
 
 # Command line completion function.
 _ctx_complete() {
+    local options=''
+
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
         ctx) options='new enter leave list help' ;;
         enter) options=$(ls -1 ${CTX_ROOT}) ;;
