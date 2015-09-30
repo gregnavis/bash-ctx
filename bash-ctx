@@ -17,6 +17,7 @@ ctx() {
         "enter") _ctx_enter $@ ;;
         "leave") _ctx_leave $@ ;;
         "edit") _ctx_edit $@ ;;
+        "reload") _ctx_reload $@ ;;
         "list") _ctx_list $@ ;;
         "help") _ctx_help ;;
         "") _ctx_help ;;
@@ -112,6 +113,20 @@ _ctx_edit() {
     "$EDITOR" "${path}"
 }
 
+# Usage: _ctx_reload
+# Reload the current context
+_ctx_reload() {
+    if [ -z "${CTX_NAME}" ]; then
+        _error "no context to reload"
+        return 1
+    fi
+
+    local ctx_name="$CTX_NAME"
+
+    _ctx_leave
+    _ctx_enter "$ctx_name"
+}
+
 # Usage: _ctx_help
 # Display a help for the commend.
 _ctx_help() {
@@ -169,9 +184,10 @@ _success() {
 # Command line completion function.
 _ctx_complete() {
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
-        ctx) options='new enter leave edit list help' ;;
+        ctx) options='new enter leave reload edit list help' ;;
         enter) options=$(ls -1 ${CTX_ROOT}) ;;
         edit) options=$(ls -1 "${CTX_ROOT}/${CTX_NAME}") ;;
+        reload) options='' ;;
         leave) options='' ;;
         new) options='' ;;
     esac
