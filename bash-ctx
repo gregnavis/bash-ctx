@@ -16,6 +16,7 @@ ctx() {
         "new") _ctx_new $@ ;;
         "enter") _ctx_enter $@ ;;
         "leave") _ctx_leave $@ ;;
+        "edit") _ctx_edit $@ ;;
         "list") _ctx_list $@ ;;
         "help") _ctx_help ;;
         "") _ctx_help ;;
@@ -93,6 +94,24 @@ _ctx_list() {
     command ls "${CTX_ROOT}"
 }
 
+# Usage: _ctx_edit <file name>
+# Edit a context-related file.
+_ctx_edit() {
+    if [ -z "${CTX_NAME}" ]; then
+        _error "enter a context first"
+        return 1
+    fi
+    if [ -z "${EDITOR}" ]; then
+        _error "set EDITOR to the editor of your choice"
+        return 1
+    fi
+
+    local ctx_dir="${CTX_ROOT}/${CTX_NAME}"
+    local path="${ctx_dir}/$1"
+
+    "$EDITOR" "${path}"
+}
+
 # Usage: _ctx_help
 # Display a help for the commend.
 _ctx_help() {
@@ -102,6 +121,7 @@ _ctx_help() {
     echo "Commands:"
     echo "  new <context name>      create a new context"
     echo "  enter <context name>    enter a context"
+    echo "  edit <file name>        edit a context-related file"
     echo "  leave                   leave the current context"
     echo "  list                    list all existing contexts"
     echo "  help                    display this message"
@@ -149,8 +169,9 @@ _success() {
 # Command line completion function.
 _ctx_complete() {
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
-        ctx) options='new enter leave list help' ;;
+        ctx) options='new enter leave edit list help' ;;
         enter) options=$(ls -1 ${CTX_ROOT}) ;;
+        edit) options=$(ls -1 "${CTX_ROOT}/${CTX_NAME}") ;;
         leave) options='' ;;
         new) options='' ;;
     esac
