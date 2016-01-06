@@ -153,8 +153,6 @@ _ctx_complete() {
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
         ctx) options='new enter leave list help' ;;
         enter) options=$(ls -1 ${CTX_ROOT}) ;;
-        leave) options='' ;;
-        new) options='' ;;
     esac
 
     COMPREPLY=($(compgen -W "${options}" ${COMP_WORDS[COMP_CWORD]}))
