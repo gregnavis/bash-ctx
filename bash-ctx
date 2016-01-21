@@ -183,13 +183,12 @@ _success() {
 
 # Command line completion function.
 _ctx_complete() {
+    local options=''
+
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
         ctx) options='new enter leave reload edit list help' ;;
         enter) options=$(ls -1 ${CTX_ROOT}) ;;
         edit) options=$(ls -1 "${CTX_ROOT}/${CTX_NAME}") ;;
-        reload) options='' ;;
-        leave) options='' ;;
-        new) options='' ;;
     esac
 
     COMPREPLY=($(compgen -W "${options}" ${COMP_WORDS[COMP_CWORD]}))
@@ -205,10 +204,17 @@ trap _ctx_leave EXIT
 # ================================
 
 # Usage: _setup
-# Setup supporting files and directories if they don't exist.
+# Setup supporting files and directories if they don't exist. Enter the context
+# specified by CTX_NAME.
 _setup() {
     if [[ ! -d "${CTX_ROOT}" ]]; then
         mkdir -p "${CTX_ROOT}"
+    fi
+
+    if [ "${PS1+x}" = "x" -a "${-#*i}" != "$-" -a -n "${CTX_NAME}" ]; then
+        CTX_NAME_COPY="${CTX_NAME}"
+        CTX_NAME=""
+        _ctx_enter "${CTX_NAME_COPY}"
     fi
 }
 
