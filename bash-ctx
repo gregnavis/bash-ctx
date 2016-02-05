@@ -14,6 +14,7 @@ ctx() {
 
     case "${command}" in
         "new") _ctx_new $@ ;;
+        "delete") _ctx_delete $@ ;;
         "enter") _ctx_enter $@ ;;
         "leave") _ctx_leave $@ ;;
         "edit") _ctx_edit $@ ;;
@@ -42,6 +43,23 @@ _ctx_new() {
     touch "${ctx_dir}/enter"
     touch "${ctx_dir}/leave"
     _success "created context $1"
+}
+
+# Usage: _ctx_delete <context name>
+# Delete an existing context.
+_ctx_delete() {
+    if [ "${CTX_NAME}" == "$1" ]; then
+        _error "leave the current context before deleting it"
+    fi
+
+    local ctx_dir="${CTX_ROOT}/$1"
+
+    if [ ! -e "${ctx_dir}" ]; then
+        _error "the context $1 does not exist"
+        return
+    fi
+
+    rm -rf "${ctx_dir}"
 }
 
 # Usage: _ctx_enter <context name>
@@ -135,6 +153,7 @@ _ctx_help() {
     echo
     echo "Commands:"
     echo "  new <context name>      create a new context"
+    echo "  delete <context name>   delete an existing context"
     echo "  enter <context name>    enter a context"
     echo "  edit <file name>        edit a context-related file"
     echo "  leave                   leave the current context"
@@ -186,7 +205,8 @@ _ctx_complete() {
     local options=''
 
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
-        ctx) options='new enter leave reload edit list help' ;;
+        ctx) options='new delete enter leave reload edit list help' ;;
+        delete) options=$(ls -1 ${CTX_ROOT}) ;;
         enter) options=$(ls -1 ${CTX_ROOT}) ;;
         edit) options=$(ls -1 "${CTX_ROOT}/${CTX_NAME}") ;;
     esac
