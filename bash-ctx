@@ -3,8 +3,10 @@
 # PUBLIC VARIABLES AND FUNCTIONS
 # ==============================
 
-# The root directory where all contexts (represent by subdirectories) are kept.
-CTX_ROOT="${HOME}/.bash-ctx"
+CTX_BASE="${HOME}/.bash-ctx" # The top-most directory.
+CTX_BIN="${CTX_BASE}/bash-ctx" # The binary to source from .bashrc.
+CTX_ROOT="${CTX_BASE}/ctx" # The directory containing the contexts.
+CTX_LIB="${CTX_BASE}/lib" # The directory containing libraries.
 
 # Context management. Call `ctx help` for details.
 ctx() {
@@ -16,9 +18,8 @@ ctx() {
         "new") _ctx_new $@ ;;
         "delete") _ctx_delete $@ ;;
         "enter") _ctx_enter $@ ;;
-        "leave") _ctx_leave $@ ;;
         "edit") _ctx_edit $@ ;;
-        "reload") _ctx_reload $@ ;;
+        "lib") _ctx_lib $@ ;;
         "list") _ctx_list $@ ;;
         "help") _ctx_help ;;
         "") _ctx_help ;;
@@ -37,16 +38,14 @@ _ctx_new() {
         return
     fi
 
-    local ctx_dir="${CTX_ROOT}/$1"
+    local ctx_path="${CTX_ROOT}/$1"
 
-    if [ -e "${ctx_dir}" ]; then
+    if [ -e "${ctx_path}" ]; then
         _error "the context $1 already exist"
         return
     fi
 
-    mkdir -p "${ctx_dir}"
-    touch "${ctx_dir}/enter"
-    touch "${ctx_dir}/leave"
+    touch "${ctx_path}"
     _success "created context $1"
 }
 
@@ -57,14 +56,14 @@ _ctx_delete() {
         _error "leave the current context before deleting it"
     fi
 
-    local ctx_dir="${CTX_ROOT}/$1"
+    local ctx_path="${CTX_ROOT}/$1"
 
-    if [ ! -e "${ctx_dir}" ]; then
+    if [ ! -e "${ctx_path}" ]; then
         _error "the context $1 does not exist"
         return
     fi
 
-    rm -rf "${ctx_dir}"
+    rm -f "${ctx_path}"
 }
 
 # Usage: _ctx_enter <context name>
@@ -81,35 +80,14 @@ _ctx_enter() {
         return 1
     fi
 
-    local ctx_dir="${CTX_ROOT}/$1"
-    local histfile=""
+    local ctx_path="${CTX_ROOT}/$1"
 
-    if [ ! -e "${ctx_dir}" ]; then
+    if [ ! -e "${ctx_path}" ]; then
         _error "the context $1 does not exist"
         return 1
     fi
 
-    _try_source "${ctx_dir}/enter"
-
-    export HISTFILE="${ctx_dir}/history"
-    history -r
-
-    export CTX_NAME="$1"
-}
-
-# Usage: _ctx_leave
-# Leave the current context: save the context-specifc command history and call
-# the leave script (if it exist). Does nothing if callout outside of a context.
-_ctx_leave() {
-    if [ -z "${CTX_NAME}" ]; then
-        return
-    fi
-
-    history -a
-
-    local ctx_dir="${CTX_ROOT}/${CTX_NAME}"
-    _try_source "${ctx_dir}/leave"
-    unset CTX_NAME
+    CTX_NAME="$1" bash
 }
 
 # Usage: _ctx_list
@@ -118,36 +96,28 @@ _ctx_list() {
     command ls "${CTX_ROOT}"
 }
 
-# Usage: _ctx_edit <file name>
-# Edit a context-related file.
+# Usage: _ctx_edit <context name>
+# Edit the context file.
 _ctx_edit() {
-    if [ -z "${CTX_NAME}" ]; then
-        _error "enter a context first"
-        return 1
-    fi
     if [ -z "${EDITOR}" ]; then
         _error "set EDITOR to the editor of your choice"
         return 1
     fi
 
-    local ctx_dir="${CTX_ROOT}/${CTX_NAME}"
-    local path="${ctx_dir}/$1"
-
-    "$EDITOR" "${path}"
+    local ctx_path="${CTX_ROOT}/$1"
+    "$EDITOR" "${ctx_path}"
 }
 
-# Usage: _ctx_reload
-# Reload the current context
-_ctx_reload() {
-    if [ -z "${CTX_NAME}" ]; then
-        _error "no context to reload"
+# Usage: _ctx_lib <lib name>
+# Edit the lib file.
+_ctx_lib() {
+    if [ -z "${EDITOR}" ]; then
+        _error "set EDITOR to the editor of your choice"
         return 1
     fi
 
-    local ctx_name="$CTX_NAME"
-
-    _ctx_leave
-    _ctx_enter "$ctx_name"
+    local lib_path="${CTX_LIB}/$1"
+    "$EDITOR" "${lib_path}"
 }
 
 # Usage: _ctx_help
@@ -160,7 +130,8 @@ _ctx_help() {
     echo "  new <context name>      create a new context"
     echo "  delete <context name>   delete an existing context"
     echo "  enter <context name>    enter a context"
-    echo "  edit <file name>        edit a context-related file"
+    echo "  edit <file name>        edit a context file"
+    echo "  lib <file name>         edit a lib file"
     echo "  leave                   leave the current context"
     echo "  list                    list all existing contexts"
     echo "  help                    display this message"
@@ -210,10 +181,11 @@ _ctx_complete() {
     local options=''
 
     case "${COMP_WORDS[COMP_CWORD - 1]}" in
-        ctx) options='new delete enter leave reload edit list help' ;;
-        delete) options=$(ls -1 ${CTX_ROOT}) ;;
-        enter) options=$(ls -1 ${CTX_ROOT}) ;;
-        edit) options=$(ls -1 "${CTX_ROOT}/${CTX_NAME}") ;;
+        ctx) options='new delete enter edit lib list help' ;;
+        delete) options=$(ls -1 "${CTX_ROOT}") ;;
+        enter) options=$(ls -1 "${CTX_ROOT}") ;;
+        edit) options=$(ls -1 "${CTX_ROOT}") ;;
+        lib) options=$(ls -1 "${CTX_LIB}") ;;
     esac
 
     COMPREPLY=($(compgen -W "${options}" ${COMP_WORDS[COMP_CWORD]}))
@@ -222,24 +194,29 @@ _ctx_complete() {
 # Complete ctx.
 complete -F _ctx_complete ctx
 
-# Call `ctx leave` when quitting the shell.
-trap _ctx_leave EXIT
-
 # SUPPORTING FILES AND DIRECTORIES
 # ================================
+
+# Usage: ctx_libs <lib name> ...
+# Source the given files from the lib directory.
+ctx_libs() {
+    while [ $# -gt 0 ]; do
+        local lib_path="${CTX_LIB}/$1"
+        shift
+        source "${lib_path}"
+    done
+}
 
 # Usage: _setup
 # Setup supporting files and directories if they don't exist. Enter the context
 # specified by CTX_NAME.
 _setup() {
-    if [[ ! -d "${CTX_ROOT}" ]]; then
-        mkdir -p "${CTX_ROOT}"
-    fi
+    mkdir -p "${CTX_ROOT}"
+    mkdir -p "${CTX_LIB}"
 
     if [ "${PS1+x}" = "x" -a "${-#*i}" != "$-" -a -n "${CTX_NAME}" ]; then
-        CTX_NAME_COPY="${CTX_NAME}"
-        CTX_NAME=""
-        _ctx_enter "${CTX_NAME_COPY}"
+        local ctx_path="${CTX_ROOT}/${CTX_NAME}"
+        _try_source "${ctx_path}"
     fi
 }
 

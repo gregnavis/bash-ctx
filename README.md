@@ -19,8 +19,8 @@ $ ./install
 Remember to load `bash-ctx` from `.bashrc` by adding:
 
 ```bash
-if [ -r "${HOME}/.bash-ctx.source" ]; then
-  source "${HOME}/.bash-ctx.source"
+if [ -r "${HOME}/.bash-ctx/bash-ctx" ]; then
+  source "${HOME}/.bash-ctx/bash-ctx"
 fi
 ```
 
@@ -32,18 +32,23 @@ Create a new context for your project:
 ctx new my-project
 ```
 
-Add project-specific aliases by editing `~/.bash-ctx/my-project/enter`:
+Edit the newly created context file with:
 
 ```
-alias _deploy='git push heroku master'
-alias _seed='rake db:seed'
+ctx edit my-project
 ```
 
-In order to enter the newly created context run `ctx switch my-project`.
+You can add project specific aliases (e.g. `alias .deploy='git push heroku'`),
+set environment variables, change directories, and so on. In order to start
+working in a given context run
 
-If you want to leave the current context run `ctx leave`. Issue
-`ctx switch another-context` to switch to `another-context` (and leave the
-current context if any).
+```
+ctx enter my-project
+```
+
+This will launch a new `bash` shell and run the context script you created
+above. When you're done you can just quit this shell and return to the parent
+shell (where you called `ctx enter`).
 
 You can also list all contexts with `ctx list`:
 
@@ -51,8 +56,6 @@ You can also list all contexts with `ctx list`:
 ctx list
 my-context
 ```
-
-Additionally `bash-ctx` keeps a separate command history for each context.
 
 ## What You Can Do
 

@@ -2,12 +2,14 @@
 
 set -e
 
-mkdir -p "${HOME}/.bash-ctx"
-cp bash-ctx "${HOME}/.bash-ctx.source"
+TARGET="${HOME}/.bash-ctx"
+
+mkdir -p "${TARGET}"
+cp bash-ctx "${TARGET}"
 
 echo
 echo 'Please remember to add the following to your .bashrc:'
 echo
-echo 'if [ -r "${HOME}/.bash-ctx.source" ]; then'
-echo '    source "${HOME}/.bash-ctx.source"'
+echo 'if [ -r "${HOME}/.bash-ctx/bash-ctx" ]; then'
+echo '    source "${HOME}/.bash-ctx/bash-ctx"'
 echo 'fi'
