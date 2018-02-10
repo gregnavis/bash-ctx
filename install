@@ -6,6 +6,7 @@ TARGET="${HOME}/.bash-ctx"
 
 mkdir -p "${TARGET}"
 cp bash-ctx "${TARGET}"
+cp -r lib "${TARGET}"
 
 echo
 echo 'Please remember to add the following to your .bashrc:'

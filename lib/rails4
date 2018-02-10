@@ -1,0 +1,55 @@
+.migrate() {
+    bundle exec rake db:migrate
+}
+
+.rollback() {
+    bundle exec rake db:rollback
+}
+
+.seed() {
+    bundle exec rake db:seed
+}
+
+.reset() {
+    bundle exec rake db:reset
+}
+
+.start() {
+    bundle exec rails server "$@"
+}
+
+.run() {
+    bundle exec rails runner "$@"
+}
+
+.console() {
+    bundle exec rails console "$@"
+}
+
+.database() {
+    bundle exec rails dbconsole "$@"
+}
+
+.generate() {
+    bundle exec rails generate "$@"
+}
+
+.destroy() {
+    bundle exec rails destroy "$@"
+}
+
+.test() {
+    bundle exec rake test "$@"
+}
+
+.rspec() {
+    bundle exec rspec "$@"
+}
+
+.routes() {
+    if [ $# -eq 0 ]; then
+        bundle exec rake routes
+    else
+        bundle exec rake routes | grep "$@"
+    fi
+}

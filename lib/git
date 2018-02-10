@@ -1,0 +1,29 @@
+function .update() {
+    git pull --autostash --rebase "${1:-${CTX_GIT_ORIGIN:-origin}}" "${2:-${CTX_GIT_BRANCH:-master}}"
+}
+
+function .squash() {
+    if [ $# -ne 1 ]; then
+        _error "Usage: .squash <number of commits>"
+        return 1
+    fi
+    if [ $1 -le 1 ]; then
+        _error "must squash at least 2 commits"
+        return 1
+    fi
+
+    local n=$(($1-1))
+    git rebase -i "HEAD~$n"
+}
+
+function .amend() {
+    git commit --amend -v
+}
+
+function .fix() {
+    git commit -a --amend -C HEAD
+}
+
+function .commit() {
+    git commit -m "$1"
+}
