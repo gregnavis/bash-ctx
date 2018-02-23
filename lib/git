@@ -1,5 +1,9 @@
+CTX_GIT_ORIGIN="${CTX_GIT_ORIGIN:-origin}"
+CTX_GIT_BRANCH="${CTX_GIT_BRANCH:-branch}"
+
 function .update() {
-    git pull --autostash --rebase "${1:-${CTX_GIT_ORIGIN:-origin}}" "${2:-${CTX_GIT_BRANCH:-master}}"
+    git pull --autostash --rebase \
+        "${1:-${CTX_GIT_ORIGIN}}" "${2:-${CTX_GIT_BRANCH}}"
 }
 
 function .squash() {
@@ -12,8 +16,7 @@ function .squash() {
         return 1
     fi
 
-    local n=$(($1-1))
-    git rebase -i "HEAD~$n"
+    git rebase -i "HEAD~$1"
 }
 
 function .amend() {
