@@ -105,6 +105,12 @@ _ctx_edit() {
     fi
 
     local ctx_path="${CTX_ROOT}/$1"
+
+    if [ ! -e "${ctx_path}" ]; then
+        _error "the context $1 does not exist"
+        return 1
+    fi
+
     "$EDITOR" "${ctx_path}"
 }
 
