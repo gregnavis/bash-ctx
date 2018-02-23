@@ -1,0 +1,3 @@
+if [ "$TERM" != "screen" -o -z "$TMUX" ]; then
+    exec tmux
+fi
