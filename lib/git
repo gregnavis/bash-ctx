@@ -1,5 +1,5 @@
 CTX_GIT_ORIGIN="${CTX_GIT_ORIGIN:-origin}"
-CTX_GIT_BRANCH="${CTX_GIT_BRANCH:-branch}"
+CTX_GIT_BRANCH="${CTX_GIT_BRANCH:-master}"
 
 function .update() {
     git pull --autostash --rebase \
