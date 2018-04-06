@@ -1,0 +1,9 @@
+CTX_HEROKU_DEFAULT_ORIGIN="${CTX_HEROKU_DEFAULT_ORIGIN:-heroku}"
+
+.deploy() {
+    if [ $# -eq 0 ]; then
+        echo git push -f HEAD "${CTX_HEROKU_DEFAULT_ORIGIN}"
+    else
+        echo git push -f HEAD "$1"
+    fi
+}
